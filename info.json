@@ -1,0 +1,9 @@
+{
+  "name": "remote-view-favorites",
+  "version": "0.1.0",
+  "title": "Remote View Favorites",
+  "author": "Tony",
+  "description": "Pin a surface as your default Remote View destination. Press TAB to open Remote View on your chosen surface instead of automatically opening on your character's current surface.",
+  "factorio_version": "2.1",
+  "dependencies": ["base >= 2.1.0"]
+}
