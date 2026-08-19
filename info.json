@@ -1,6 +1,6 @@
 {
   "name": "remote-view-favorites",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "title": "Remote View Favorites",
   "author": "Tony",
   "description": "Pin a surface as your default Remote View destination. Press TAB to open Remote View on your chosen surface instead of automatically opening on your character's current surface.",

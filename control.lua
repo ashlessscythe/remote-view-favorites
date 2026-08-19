@@ -1,3 +1,5 @@
+local mod_gui = require("mod-gui")
+
 local GUI_ROOT = "rvf_pin_frame"
 local GUI_TOGGLE = "rvf_top_toggle"
 local PIN_ACTION = "rvf-pin"
@@ -131,7 +133,8 @@ local function destroy_toggle(player)
   if not player.valid then
     return
   end
-  local toggle = player.gui.top[GUI_TOGGLE]
+  local flow = mod_gui.get_button_flow(player)
+  local toggle = flow[GUI_TOGGLE]
   if toggle and toggle.valid then
     toggle.destroy()
   end
@@ -173,9 +176,6 @@ local function rebuild_toggle(player)
   if not player.valid or not player.connected then
     return
   end
-  if player.controller_type ~= defines.controllers.remote then
-    return
-  end
   if not setting_show_pin_ui(player) then
     return
   end
@@ -186,12 +186,13 @@ local function rebuild_toggle(player)
   end
   local open = data.window_open ~= false
 
-  player.gui.top.add({
+  -- Vanilla mod-gui button row (top-left cluster with other mods).
+  mod_gui.get_button_flow(player).add({
     type = "sprite-button",
     name = GUI_TOGGLE,
-    sprite = "utility/track_button",
+    sprite = "rvf-crt-icon",
     tooltip = open and { "rvf.hide-window" } or { "rvf.show-window" },
-    style = "shortcut_bar_button_small",
+    style = mod_gui.button_style,
     mouse_button_filter = { "left" },
     auto_toggle = false,
     toggled = open,

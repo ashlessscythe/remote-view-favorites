@@ -8,7 +8,7 @@ This is a small Factorio **2.1** QoL mod. It does not change recipes, combat, or
 
 ## Why a companion list?
 
-The vanilla upper-left surface selector is engine GUI. Mods cannot add pin buttons to it. This mod shows a small pin list on the left while you are in Remote View. A pin button on the top shortcut bar shows or hides that list.
+The vanilla upper-left surface selector is engine GUI. Mods cannot add pin buttons to it. This mod shows a small pin list on the left while you are in Remote View. A CRT icon in the top-left mod button cluster (with other mods) shows or hides that list.
 
 ## Install
 

@@ -9,4 +9,11 @@ data:extend({
     consuming = "none",
     action = "lua",
   },
+  {
+    type = "sprite",
+    name = "rvf-crt-icon",
+    filename = "__remote-view-favorites__/graphics/crt-icon.png",
+    size = 64,
+    flags = { "gui-icon" },
+  },
 })

@@ -2,11 +2,21 @@
 
 All notable changes to Remote View Favorites are documented here.
 
+## [0.1.2] — 2026-08-19
+
+### Added
+
+- Portal thumbnail (CRT monitor) and a stencil CRT icon for the toggle button.
+
+### Changed
+
+- Toggle lives in the top-left mod-gui button cluster with other mods, not as a separate top-bar control.
+
 ## [0.1.1] — 2026-08-19
 
 ### Added
 
-- Top-bar pin button to show or hide the list while in Remote View.
+- Button to show or hide the pin list while in Remote View.
 
 ### Changed
 
