@@ -21,9 +21,10 @@ Built for **Factorio 2.1**. Space Age is supported but not required. Nothing abo
 ## How to use
 
 1. Press **TAB** (or your **Toggle map** binding) to enter Remote View.
-2. In the small **Default surface** list on the left, click the pin next to a surface.
-3. Exit Remote View, move wherever you like, and press TAB again.
-4. Remote View opens on the pinned surface.
+2. Click the small pin on the top shortcut bar if the list is hidden.
+3. In the **Default surface** list, click the pin next to a surface.
+4. Exit Remote View, move wherever you like, and press TAB again.
+5. Remote View opens on the pinned surface.
 
 Click the same pin again to clear the default and restore vanilla TAB behavior.
 

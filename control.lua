@@ -1,5 +1,7 @@
 local GUI_ROOT = "rvf_pin_frame"
+local GUI_TOGGLE = "rvf_top_toggle"
 local PIN_ACTION = "rvf-pin"
+local TOGGLE_ACTION = "rvf-toggle-window"
 
 --- @param player_index uint
 --- @return table
@@ -8,7 +10,7 @@ local function player_data(player_index)
   local data = storage.players[player_index]
   if not data then
     -- default_surface_index is the 0.1.0 hook; later versions can add favorites = {}
-    data = { default_surface_index = nil }
+    data = { default_surface_index = nil, window_open = true }
     storage.players[player_index] = data
   end
   return data
@@ -114,7 +116,7 @@ local function switch_remote_to(player, surface)
 end
 
 --- @param player LuaPlayer
-local function destroy_gui(player)
+local function destroy_window(player)
   if not player.valid then
     return
   end
@@ -122,6 +124,33 @@ local function destroy_gui(player)
   if root and root.valid then
     root.destroy()
   end
+end
+
+--- @param player LuaPlayer
+local function destroy_toggle(player)
+  if not player.valid then
+    return
+  end
+  local toggle = player.gui.top[GUI_TOGGLE]
+  if toggle and toggle.valid then
+    toggle.destroy()
+  end
+end
+
+--- @param player LuaPlayer
+local function destroy_gui(player)
+  destroy_window(player)
+  destroy_toggle(player)
+end
+
+--- @param element LuaGuiElement
+local function hug_content(element)
+  local style = element.style
+  style.horizontally_stretchable = false
+  style.vertically_stretchable = false
+  style.horizontally_squashable = false
+  style.padding = 0
+  style.margin = 0
 end
 
 --- @return LuaSurface[]
@@ -139,11 +168,11 @@ local function listable_surfaces()
 end
 
 --- @param player LuaPlayer
-local function rebuild_gui(player)
+local function rebuild_toggle(player)
+  destroy_toggle(player)
   if not player.valid or not player.connected then
     return
   end
-  destroy_gui(player)
   if player.controller_type ~= defines.controllers.remote then
     return
   end
@@ -151,25 +180,71 @@ local function rebuild_gui(player)
     return
   end
 
-  local default_index = player_data(player.index).default_surface_index
+  local data = player_data(player.index)
+  if data.window_open == nil then
+    data.window_open = true
+  end
+  local open = data.window_open ~= false
+
+  player.gui.top.add({
+    type = "sprite-button",
+    name = GUI_TOGGLE,
+    sprite = "utility/track_button",
+    tooltip = open and { "rvf.hide-window" } or { "rvf.show-window" },
+    style = "shortcut_bar_button_small",
+    mouse_button_filter = { "left" },
+    auto_toggle = false,
+    toggled = open,
+    tags = { rvf_action = TOGGLE_ACTION },
+  })
+end
+
+--- @param player LuaPlayer
+local function rebuild_window(player)
+  destroy_window(player)
+  if not player.valid or not player.connected then
+    return
+  end
+  if player.controller_type ~= defines.controllers.remote then
+    return
+  end
+  if not setting_show_pin_ui(player) then
+    return
+  end
+
+  local data = player_data(player.index)
+  if data.window_open == false then
+    return
+  end
+
+  local default_index = data.default_surface_index
   if default_index and not resolve_surface(default_index) then
-    player_data(player.index).default_surface_index = nil
+    data.default_surface_index = nil
     default_index = nil
   end
 
+  -- gui.left stretches to sibling width (other mods). Disable stretch + header filler
+  -- so this frame hugs the pin rows instead of filling the column.
   local frame = player.gui.left.add({
     type = "frame",
     name = GUI_ROOT,
     caption = { "rvf.frame-caption" },
     direction = "vertical",
+    style = "no_header_filler_frame",
   })
+  hug_content(frame)
+  frame.style.padding = 4
+  frame.style.use_header_filler = false
+
   local pane = frame.add({
     type = "scroll-pane",
     name = "rvf_list",
+    style = "naked_scroll_pane",
     horizontal_scroll_policy = "never",
     vertical_scroll_policy = "auto",
   })
-  pane.style.maximal_height = 280
+  hug_content(pane)
+  pane.style.maximal_height = 220
 
   for _, surface in ipairs(listable_surfaces()) do
     local row = pane.add({
@@ -177,7 +252,9 @@ local function rebuild_gui(player)
       direction = "horizontal",
       name = "rvf_row_" .. tostring(surface.index),
     })
+    hug_content(row)
     row.style.vertical_align = "center"
+    row.style.horizontal_spacing = 4
 
     local pinned = default_index == surface.index
     local button = row.add({
@@ -185,7 +262,7 @@ local function rebuild_gui(player)
       name = "rvf_pin_" .. tostring(surface.index),
       sprite = pinned and "utility/track_button_white" or "utility/track_button",
       tooltip = pinned and { "rvf.unpin-tooltip" } or { "rvf.pin-tooltip" },
-      style = "slot_button",
+      style = "mini_button",
       mouse_button_filter = { "left" },
       auto_toggle = false,
       toggled = pinned,
@@ -194,7 +271,7 @@ local function rebuild_gui(player)
         surface_index = surface.index,
       },
     })
-    button.style.size = 28
+    button.style.size = 20
 
     local caption
     if pinned then
@@ -202,11 +279,19 @@ local function rebuild_gui(player)
     else
       caption = surface.localised_name or surface.name
     end
-    row.add({
+    local label = row.add({
       type = "label",
       caption = caption,
+      ignored_by_interaction = true,
     })
+    hug_content(label)
   end
+end
+
+--- @param player LuaPlayer
+local function rebuild_gui(player)
+  rebuild_toggle(player)
+  rebuild_window(player)
 end
 
 local function rebuild_all_guis()
@@ -310,11 +395,22 @@ script.on_event(defines.events.on_gui_click, function(event)
     return
   end
   local tags = element.tags
-  if not tags or tags.rvf_action ~= PIN_ACTION then
+  if not tags or not tags.rvf_action then
     return
   end
   local player = game.get_player(event.player_index)
   if not player then
+    return
+  end
+
+  if tags.rvf_action == TOGGLE_ACTION then
+    local data = player_data(player.index)
+    data.window_open = data.window_open == false
+    rebuild_gui(player)
+    return
+  end
+
+  if tags.rvf_action ~= PIN_ACTION then
     return
   end
   local data = player_data(player.index)
@@ -327,7 +423,7 @@ script.on_event(defines.events.on_gui_click, function(event)
       data.default_surface_index = index
     end
   end
-  rebuild_gui(player)
+  rebuild_window(player)
 end)
 
 script.on_event(defines.events.on_player_joined_game, function(event)
