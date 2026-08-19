@@ -2,6 +2,15 @@
 
 All notable changes to Remote View Favorites are documented here.
 
+## [0.2.0] — 2026-08-19
+
+### Added
+
+- Numbered favorites: assign slot 1–9 or 0 on each surface in the pin list.
+- Jump keys enter Remote View on that surface, or switch to it if you are already in Remote View.
+- Defaults: Alt+1, Alt+2, Alt+3. Slots 4–9 and 0 are unbound; bind them in Settings → Controls.
+- Pin list shows space platform names instead of internal ids such as `platform-1`.
+
 ## [0.1.2] — 2026-08-19
 
 ### Added
