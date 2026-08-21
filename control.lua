@@ -446,11 +446,88 @@ local function rebuild_window(player)
     end
     local label = row.add({
       type = "label",
+      name = "rvf_label_" .. tostring(surface.index),
       caption = caption,
       ignored_by_interaction = true,
     })
     hug_content(label)
   end
+end
+
+--- Update pin/slot widgets without destroying the scroll-pane (keeps scroll position).
+--- @param player LuaPlayer
+local function refresh_window(player)
+  if not player.valid or not player.connected then
+    return
+  end
+  local root = player.gui.left[GUI_ROOT]
+  if not root or not root.valid then
+    rebuild_window(player)
+    return
+  end
+  local pane = root.rvf_list
+  if not pane or not pane.valid then
+    rebuild_window(player)
+    return
+  end
+
+  local data = player_data(player.index)
+  local default_index = data.default_surface_index
+  if default_index and not resolve_surface(default_index) then
+    data.default_surface_index = nil
+    default_index = nil
+  end
+
+  local surfaces = listable_surfaces()
+  if #pane.children ~= #surfaces then
+    rebuild_window(player)
+    return
+  end
+
+  -- Avoid re-entering on_gui_selection_state_changed when syncing drop-downs.
+  storage.rvf_refreshing = true
+  for _, surface in ipairs(surfaces) do
+    local row = pane["rvf_row_" .. tostring(surface.index)]
+    if not row or not row.valid then
+      storage.rvf_refreshing = nil
+      rebuild_window(player)
+      return
+    end
+
+    local pinned = default_index == surface.index
+    local button = row["rvf_pin_" .. tostring(surface.index)]
+    if button and button.valid then
+      button.sprite = pinned and "utility/track_button_white" or "utility/track_button"
+      button.tooltip = pinned and { "rvf.unpin-tooltip" } or { "rvf.pin-tooltip" }
+      button.toggled = pinned
+    end
+
+    local slot = slot_for_surface(data, surface.index)
+    local selected = slot_to_selected_index(slot)
+    local dropdown = row["rvf_slot_" .. tostring(surface.index)]
+    if dropdown and dropdown.valid then
+      if dropdown.selected_index ~= selected then
+        dropdown.selected_index = selected
+      end
+      dropdown.tooltip = slot_tooltip(slot)
+    end
+
+    local display = surface_caption(surface)
+    local caption = pinned and { "rvf.pinned", display } or display
+    local label = row["rvf_label_" .. tostring(surface.index)]
+    if not label or not label.valid then
+      for _, child in pairs(row.children) do
+        if child.type == "label" then
+          label = child
+          break
+        end
+      end
+    end
+    if label and label.valid then
+      label.caption = caption
+    end
+  end
+  storage.rvf_refreshing = nil
 end
 
 --- @param player LuaPlayer
@@ -630,10 +707,13 @@ script.on_event(defines.events.on_gui_click, function(event)
       data.default_surface_index = index
     end
   end
-  rebuild_window(player)
+  refresh_window(player)
 end)
 
 script.on_event(defines.events.on_gui_selection_state_changed, function(event)
+  if storage.rvf_refreshing then
+    return
+  end
   local element = event.element
   if not element or not element.valid then
     return
@@ -652,7 +732,7 @@ script.on_event(defines.events.on_gui_selection_state_changed, function(event)
   end
   local data = player_data(player.index)
   set_favorite_slot(data, tags.surface_index, selected_index_to_slot(element.selected_index))
-  rebuild_window(player)
+  refresh_window(player)
 end)
 
 script.on_event(defines.events.on_player_joined_game, function(event)

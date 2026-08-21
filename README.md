@@ -64,6 +64,7 @@ Preferences are stored per player in `storage` using `LuaSurface.index` (stable 
 - [ ] From the character, press Alt+1 — Remote View opens on slot 1
 - [ ] Press Alt+2 — camera switches to slot 2
 - [ ] Assign slot 1 to a third surface — the previous slot 1 row goes back to `—`
+- [ ] Scroll the pin list, change a slot — scroll position stays put
 - [ ] Assign slot 4, confirm it has no key until bound in Settings → Controls
 - [ ] Save / reload — slots remain
 - [ ] Delete a slotted surface — that slot clears, no error
