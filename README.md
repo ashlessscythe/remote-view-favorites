@@ -4,9 +4,11 @@ Pin a surface as your **default Remote View destination**. Toggle map (default *
 
 This is a small Factorio **2.1** QoL mod. It does not change recipes, combat, or progression.
 
+![Companion pin list next to the vanilla surface selector](media/pin-list-screenshot.jpg)
+
 ## Why a companion list?
 
-The vanilla upper-left surface selector is engine GUI. Mods cannot add pin buttons to it. This mod shows a small pin list on the left while you are in Remote View. A CRT icon in the top-left mod button cluster (with other mods) shows or hides that list.
+The vanilla upper-left surface selector is engine GUI. Mods cannot add pin buttons to it. This mod shows a small pin list on the left while you are in Remote View — styled like the vanilla surface list (dark panel, row separators, pinned-row highlight). A CRT icon in the top-left mod button cluster (with other mods) shows or hides that list.
 
 ## Install
 

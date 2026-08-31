@@ -2,13 +2,17 @@
 
 Paste everything **below the horizontal rule** into the Factorio Mod Portal **Description** field.
 
-The Mod Portal accepts a limited markdown subset (headings, lists, bold, italic, links, images). Keep images on a `public` branch under `media/` if you add screenshots later; `media/` and `docs/` are omitted from the release ZIP.
+The Mod Portal accepts a limited markdown subset (headings, lists, bold, italic, links, images). Screenshots live on the `public` branch under `media/` (excluded from the release ZIP). Image URL for the portal:
+
+`https://raw.githubusercontent.com/ashlessscythe/remote-view-favorites/public/media/pin-list-screenshot.jpg`
 
 ---
 
 # Remote View Favorites
 
 > **Pin where TAB opens Remote View. Jump with Alt+1–3.**
+
+![Companion pin list next to the vanilla surface selector](https://raw.githubusercontent.com/ashlessscythe/remote-view-favorites/public/media/pin-list-screenshot.jpg)
 
 Factorio Remote View normally opens on the surface your character is standing on. This mod lets **each player** pin one default surface. Toggle map (default **TAB**) then opens Remote View there instead.
 
@@ -45,7 +49,7 @@ TAB still uses the pin. Numbered keys do not replace it.
 
 ## Why a separate list?
 
-The vanilla surface selector in the upper left is engine UI. Mods cannot add buttons to it. This companion list is the supported way to pin a surface and assign jump slots without replacing the vanilla selector.
+The vanilla surface selector in the upper left is engine UI. Mods cannot add buttons to it. This companion list is the supported way to pin a surface and assign jump slots without replacing the vanilla selector. It uses the same dark HUD look: bordered list, separators between rows, and a highlight on your pinned default.
 
 ---
 

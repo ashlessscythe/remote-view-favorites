@@ -379,16 +379,15 @@ local function rebuild_window(player)
     name = GUI_ROOT,
     caption = { "rvf.frame-caption" },
     direction = "vertical",
-    style = "no_header_filler_frame",
+    style = "rvf_panel_frame",
   })
   hug_content(frame)
-  frame.style.padding = 4
   frame.style.use_header_filler = false
 
   local pane = frame.add({
     type = "scroll-pane",
     name = "rvf_list",
-    style = "naked_scroll_pane",
+    style = "rvf_list_scroll_pane",
     horizontal_scroll_policy = "never",
     vertical_scroll_policy = "auto",
   })
@@ -396,16 +395,14 @@ local function rebuild_window(player)
   pane.style.maximal_height = 220
 
   for _, surface in ipairs(listable_surfaces()) do
+    local pinned = default_index == surface.index
     local row = pane.add({
-      type = "flow",
+      type = "frame",
       direction = "horizontal",
       name = "rvf_row_" .. tostring(surface.index),
+      style = pinned and "rvf_list_row_pinned" or "rvf_list_row",
     })
-    hug_content(row)
-    row.style.vertical_align = "center"
-    row.style.horizontal_spacing = 4
 
-    local pinned = default_index == surface.index
     local button = row.add({
       type = "sprite-button",
       name = "rvf_pin_" .. tostring(surface.index),
@@ -448,6 +445,7 @@ local function rebuild_window(player)
       type = "label",
       name = "rvf_label_" .. tostring(surface.index),
       caption = caption,
+      style = pinned and "rvf_surface_label_pinned" or "rvf_surface_label",
       ignored_by_interaction = true,
     })
     hug_content(label)
@@ -495,6 +493,8 @@ local function refresh_window(player)
     end
 
     local pinned = default_index == surface.index
+    row.style = pinned and "rvf_list_row_pinned" or "rvf_list_row"
+
     local button = row["rvf_pin_" .. tostring(surface.index)]
     if button and button.valid then
       button.sprite = pinned and "utility/track_button_white" or "utility/track_button"
@@ -525,6 +525,7 @@ local function refresh_window(player)
     end
     if label and label.valid then
       label.caption = caption
+      label.style = pinned and "rvf_surface_label_pinned" or "rvf_surface_label"
     end
   end
   storage.rvf_refreshing = nil

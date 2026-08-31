@@ -2,6 +2,16 @@
 
 All notable changes to Remote View Favorites are documented here.
 
+## [0.2.2] — 2026-08-30
+
+### Changed
+
+- Pin list uses dark HUD panel styling: bordered scroll area, row separators, and highlight on the pinned/default surface.
+
+### Added
+
+- Screenshot in README and Mod Portal description (`media/pin-list-screenshot.jpg` on the `public` branch).
+
 ## [0.2.1] — 2026-08-21
 
 ### Fixed

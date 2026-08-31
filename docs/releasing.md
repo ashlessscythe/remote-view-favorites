@@ -10,6 +10,7 @@ GitHub Actions builds the Mod Portal ZIP. You do not need to run `scripts/packag
 4. The **Release** workflow packages the zip, checks it has no executables/scripts, and attaches it to a GitHub Release.
 5. Download that zip from the GitHub Release and upload it on the Factorio Mod Portal.
 6. If the portal description changed, paste from [mod-portal.md](mod-portal.md).
+7. After pushing, sync `public` (`./sync_public.sh`) so Mod Portal screenshot URLs under `media/` resolve.
 
 CI on `main` / `public` / pull requests smoke-tests the same zip rules without creating a release.
 
@@ -19,4 +20,4 @@ CI on `main` / `public` / pull requests smoke-tests the same zip rules without c
 - One top-level folder: `remote-view-favorites_<version>/`
 - Tag `vX.Y.Z` must match `info.json` version `X.Y.Z`
 - No `.sh` / `.py` / binaries in the zip; execute bits stripped
-- `docs/`, `scripts/`, and `CHANGELOG.md` stay in git only; Factorio gets generated `changelog.txt`
+- `docs/`, `scripts/`, `media/`, and `CHANGELOG.md` stay in git only; Factorio gets generated `changelog.txt`
