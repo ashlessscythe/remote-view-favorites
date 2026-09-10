@@ -245,6 +245,22 @@ local function destroy_window(player)
   end
 end
 
+--- Mirror vanilla surface-list visibility (HUD mods like Dynamic HUD write this flag).
+--- @param player LuaPlayer
+local function sync_window_visibility(player)
+  if not player.valid or not player.connected then
+    return
+  end
+  local root = player.gui.left[GUI_ROOT]
+  if not root or not root.valid then
+    return
+  end
+  local want = player.game_view_settings.show_surface_list
+  if root.visible ~= want then
+    root.visible = want
+  end
+end
+
 --- @param player LuaPlayer
 local function destroy_toggle(player)
   if not player.valid then
@@ -450,6 +466,8 @@ local function rebuild_window(player)
     })
     hug_content(label)
   end
+
+  sync_window_visibility(player)
 end
 
 --- Update pin/slot widgets without destroying the scroll-pane (keeps scroll position).
@@ -630,6 +648,15 @@ end)
 script.on_event(defines.events.on_tick, function()
   if storage.pending_toggle and next(storage.pending_toggle) then
     process_stale_pending()
+  end
+end)
+
+-- Match Dynamic HUD's half-second HUD check so companion hide/show stays in step.
+script.on_nth_tick(30, function()
+  for _, player in pairs(game.connected_players) do
+    if player.controller_type == defines.controllers.remote then
+      sync_window_visibility(player)
+    end
   end
 end)
 

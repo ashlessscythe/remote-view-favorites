@@ -1,6 +1,6 @@
 {
   "name": "remote-view-favorites",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "title": "Remote View Favorites",
   "author": "Tony",
   "description": "Pin a surface as your default Remote View destination. Press TAB to open Remote View there, or jump with numbered favorites (Alt+1–3 by default).",

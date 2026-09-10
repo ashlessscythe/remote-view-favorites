@@ -10,6 +10,8 @@ This is a small Factorio **2.1** QoL mod. It does not change recipes, combat, or
 
 The vanilla upper-left surface selector is engine GUI. Mods cannot add pin buttons to it. This mod shows a small pin list on the left while you are in Remote View — styled like the vanilla surface list (dark panel, row separators, pinned-row highlight). A CRT icon in the top-left mod button cluster (with other mods) shows or hides that list.
 
+The pin list mirrors `player.game_view_settings.show_surface_list`, so HUD mods that hide the vanilla surface selector (for example [Dynamic HUD](https://mods.factorio.com/mod/dynamic-hud)) hide this companion too. No dependency. The CRT toggle sits in `mod-gui` under `gui.top`, so Dynamic HUD’s “Mods UI: auto-hide top” covers it as well.
+
 ## Install
 
 Requires Factorio 2.1. Space Age is optional.
@@ -88,6 +90,11 @@ Preferences are stored per player in `storage` using `LuaSurface.index` (stable 
 - [ ] Space platforms appear unless hidden from the vanilla surface list
 - [ ] Platform rows show the custom name (for example Planet Express), not `platform-1`
 - [ ] No other Space Age behavior is changed
+
+### Dynamic HUD (optional)
+
+- [ ] With Dynamic HUD, pin list hides and shows with the vanilla surface selector
+- [ ] CRT toggle hides with Mods UI auto-hide top
 
 ## License
 

@@ -2,6 +2,13 @@
 
 All notable changes to Remote View Favorites are documented here.
 
+## [0.2.3] — 2026-09-10
+
+### Added
+
+- Companion pin list visibility follows `player.game_view_settings.show_surface_list`, so HUD mods that hide the vanilla Remote View surface selector (e.g. Dynamic HUD) hide this list too. No dependency on those mods.
+- Pattern for other mods: mirror that flag on companion UI next to the surface selector, or place persistent chrome under `gui.top` / `gui.left` via `mod-gui` for Dynamic HUD’s top/left auto-hide (`mod_gui.get_button_flow` / `get_frame_flow`). Avoid `gui.screen` for always-on icons you want auto-hidden.
+
 ## [0.2.2] — 2026-08-30
 
 ### Changed

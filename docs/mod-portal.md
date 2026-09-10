@@ -71,6 +71,7 @@ Jump keys are rebound in **Settings → Controls**, not Mod settings.
 - Factorio **2.1**
 - Vanilla and **Space Age** (planets and space platforms that appear in the surface list)
 - No extra dependencies
+- Works with **Dynamic HUD** and similar mods: the companion pin list follows the vanilla surface selector’s visibility (`show_surface_list`). The CRT toggle uses the shared mod-gui top cluster.
 
 If the pinned or slotted surface is deleted or no longer exists, that assignment is cleared and the key does nothing. The mod does not error in that case.
 
