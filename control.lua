@@ -96,12 +96,13 @@ end
 local function get_valid_default(player)
   local data = player_data(player.index)
   local surface = resolve_surface(data.default_surface_index)
-  if surface then
+  if surface and surface_listable(surface) then
     return surface
   end
-  if data.default_surface_index then
+  if not surface and data.default_surface_index then
     data.default_surface_index = nil
   end
+  -- A hidden platform's pin is ignored, not cleared, so it works again if the platform un-hides.
   return nil
 end
 
@@ -114,11 +115,7 @@ local function slot_tooltip(slot)
   if not slot then
     return { "rvf.slot-tooltip-none" }
   end
-  if slot <= 3 then
-    return { "rvf.slot-tooltip-default", tostring(slot) }
-  end
-  local label = slot == 10 and "0" or tostring(slot)
-  return { "rvf.slot-tooltip-unbound", label }
+  return { "rvf.slot-tooltip-" .. slot }
 end
 
 local slot_for_surface = favorites_lib.slot_for_surface
@@ -290,13 +287,18 @@ local function surface_caption(surface)
 end
 
 --- @param surface LuaSurface
---- @return string
-local function surface_sort_key(surface)
+--- @return table
+local function surface_sort_data(surface)
   local platform = surface.platform
-  if platform and platform.valid and platform.name ~= "" then
-    return string.lower(platform.name)
+  if platform and platform.valid then
+    return { kind = "platform", name = platform.name ~= "" and platform.name or surface.name }
   end
-  return surface.name
+  local planet = surface.planet
+  if planet and planet.valid then
+    local proto = planet.prototype
+    return { kind = "planet", name = surface.name, order = proto and proto.order or "" }
+  end
+  return { kind = "other", name = surface.name }
 end
 
 --- @return LuaSurface[]
@@ -307,9 +309,16 @@ local function listable_surfaces()
       list[#list + 1] = surface
     end
   end
-  table.sort(list, function(a, b)
-    return surface_sort_key(a) < surface_sort_key(b)
+  local keyed = {}
+  for i, surface in ipairs(list) do
+    keyed[i] = { surface = surface, data = surface_sort_data(surface) }
+  end
+  table.sort(keyed, function(a, b)
+    return favorites_lib.surface_less(a.data, b.data)
   end)
+  for i, entry in ipairs(keyed) do
+    list[i] = entry.surface
+  end
   return list
 end
 
@@ -816,6 +825,10 @@ if script.active_mods["factorio-test"] then
   remote.add_interface("rvf-test", {
     jump = function(player_index, slot)
       jump_to_favorite(player_index, slot)
+    end,
+    default_surface = function(player_index)
+      local surface = get_valid_default({ index = player_index })
+      return surface and surface.index or nil
     end,
   })
   require("__factorio-test__/init")(

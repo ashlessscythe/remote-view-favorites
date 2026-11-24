@@ -105,4 +105,31 @@ h.run("functions tolerate old saves without the new fields", function()
   fav.clear_surface({}, 1)
 end)
 
+h.run("surface_less: planets, then platforms, then others", function()
+  local list = {
+    { kind = "other", name = "zeta" },
+    { kind = "platform", name = "beta" },
+    { kind = "planet", name = "vulcanus", order = "b[vulcanus]" },
+    { kind = "platform", name = "Alpha" },
+    { kind = "planet", name = "nauvis", order = "a[nauvis]" },
+    { kind = "other", name = "alpha-other" },
+    { kind = "planet", name = "aaa-noorder" },
+  }
+  table.sort(list, fav.surface_less)
+  local names = {}
+  for i, e in ipairs(list) do names[i] = e.name end
+  h.assert_eq(table.concat(names, ","), "aaa-noorder,nauvis,vulcanus,Alpha,beta,alpha-other,zeta")
+end)
+
+h.run("surface_less: same-order planets fall back to name; ties are strict", function()
+  local a = { kind = "planet", name = "b", order = "x" }
+  local b = { kind = "planet", name = "a", order = "x" }
+  h.assert_eq(fav.surface_less(b, a), true)
+  h.assert_eq(fav.surface_less(a, b), false)
+  h.assert_eq(fav.surface_less(a, a), false)
+  local p1 = { kind = "platform", name = "Foo" }
+  local p2 = { kind = "platform", name = "foo" }
+  h.assert_eq(fav.surface_less(p1, p2) ~= fav.surface_less(p2, p1), true)
+end)
+
 os.exit(h.summary() and 0 or 1)

@@ -93,4 +93,29 @@ function favorites.recall_position(data, surface_index)
   return nil
 end
 
+local KIND_RANK = { planet = 1, platform = 2, other = 3 }
+
+--- Vanilla surface-list order: planets (by prototype order, then name), then platforms
+--- (case-insensitive name), then anything else by name.
+--- @param a {kind: string, name: string, order: string|nil}
+--- @param b {kind: string, name: string, order: string|nil}
+--- @return boolean
+function favorites.surface_less(a, b)
+  local ra, rb = KIND_RANK[a.kind] or 3, KIND_RANK[b.kind] or 3
+  if ra ~= rb then
+    return ra < rb
+  end
+  if ra == 1 then
+    local oa, ob = a.order or "", b.order or ""
+    if oa ~= ob then
+      return oa < ob
+    end
+  end
+  local na, nb = a.name:lower(), b.name:lower()
+  if na ~= nb then
+    return na < nb
+  end
+  return a.name < b.name
+end
+
 return favorites

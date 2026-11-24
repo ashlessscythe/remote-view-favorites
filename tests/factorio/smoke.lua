@@ -50,3 +50,38 @@ describe("surface deletion cleanup", function()
     end)
   end)
 end)
+
+describe("hidden pinned platform", function()
+  local fake_player = 9998
+
+  after_each(function()
+    storage.players[fake_player] = nil
+  end)
+
+  test("TAB default ignores a hidden platform pin without clearing it", function()
+    if not (script.active_mods["space-age"] and prototypes.space_location["nauvis"]) then
+      log("[rvf-test] space platforms unavailable; skipping")
+      return
+    end
+    local platform = game.forces.player.create_space_platform({
+      name = "rvf-test-platform", planet = "nauvis", starter_pack = "space-platform-starter-pack",
+    })
+    if not platform then
+      log("[rvf-test] could not create platform; skipping")
+      return
+    end
+    platform.apply_starter_pack()
+    local surface = platform.surface
+    assert(surface and surface.valid, "platform has no surface")
+    storage.players[fake_player] = {
+      default_surface_index = surface.index, window_open = true, favorites = {}, last_positions = {},
+    }
+    assert(remote.call("rvf-test", "default_surface", fake_player) == surface.index, "visible pin not used")
+    platform.hidden = true
+    assert(remote.call("rvf-test", "default_surface", fake_player) == nil, "hidden pin was used")
+    assert(storage.players[fake_player].default_surface_index == surface.index, "hidden pin was cleared")
+    platform.hidden = false
+    assert(remote.call("rvf-test", "default_surface", fake_player) == surface.index, "pin not restored")
+    platform.destroy(1)
+  end)
+end)
