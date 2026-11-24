@@ -1,11 +1,12 @@
 local mod_gui = require("mod-gui")
+local favorites_lib = require("scripts.favorites")
 
 local GUI_ROOT = "rvf_pin_frame"
 local GUI_TOGGLE = "rvf_top_toggle"
 local PIN_ACTION = "rvf-pin"
 local SLOT_ACTION = "rvf-slot"
 local TOGGLE_ACTION = "rvf-toggle-window"
-local FAVORITE_COUNT = 10
+local FAVORITE_COUNT = favorites_lib.COUNT
 local SLOT_ITEMS = { { "rvf.slot-none" }, "1", "2", "3", "4", "5", "6", "7", "8", "9", "0" }
 
 local FAVORITE_INPUTS = {}
@@ -21,6 +22,9 @@ local function ensure_player_fields(data)
   if data.window_open == nil then
     data.window_open = true
   end
+  if data.last_positions == nil then
+    data.last_positions = {}
+  end
 end
 
 --- @param player_index uint
@@ -29,7 +33,7 @@ local function player_data(player_index)
   storage.players = storage.players or {}
   local data = storage.players[player_index]
   if not data then
-    data = { default_surface_index = nil, window_open = true, favorites = {} }
+    data = { default_surface_index = nil, window_open = true, favorites = {}, last_positions = {} }
     storage.players[player_index] = data
   else
     ensure_player_fields(data)
@@ -101,23 +105,8 @@ local function get_valid_default(player)
   return nil
 end
 
---- @param slot uint|nil
---- @return uint
-local function slot_to_selected_index(slot)
-  if not slot then
-    return 1
-  end
-  return slot + 1
-end
-
---- @param index uint
---- @return uint|nil
-local function selected_index_to_slot(index)
-  if not index or index <= 1 then
-    return nil
-  end
-  return index - 1
-end
+local slot_to_selected_index = favorites_lib.slot_to_selected_index
+local selected_index_to_slot = favorites_lib.selected_index_to_slot
 
 --- @param slot uint|nil
 --- @return LocalisedString
@@ -132,37 +121,8 @@ local function slot_tooltip(slot)
   return { "rvf.slot-tooltip-unbound", label }
 end
 
---- @param data table
---- @param surface_index uint
---- @return uint|nil
-local function slot_for_surface(data, surface_index)
-  local favorites = data.favorites
-  if not favorites then
-    return nil
-  end
-  for slot = 1, FAVORITE_COUNT do
-    if favorites[slot] == surface_index then
-      return slot
-    end
-  end
-  return nil
-end
-
---- One surface per slot. slot = nil clears this surface's assignment.
---- @param data table
---- @param surface_index uint
---- @param slot uint|nil
-local function set_favorite_slot(data, surface_index, slot)
-  data.favorites = data.favorites or {}
-  for s = 1, FAVORITE_COUNT do
-    if data.favorites[s] == surface_index then
-      data.favorites[s] = nil
-    end
-  end
-  if slot and slot >= 1 and slot <= FAVORITE_COUNT then
-    data.favorites[slot] = surface_index
-  end
-end
+local slot_for_surface = favorites_lib.slot_for_surface
+local set_favorite_slot = favorites_lib.set_slot
 
 --- @param player LuaPlayer
 --- @param slot uint
@@ -180,6 +140,20 @@ local function get_valid_favorite(player, slot)
   return nil
 end
 
+--- Remember where a remote-view player is looking so returning to this surface restores it.
+--- @param player LuaPlayer
+local function record_remote_position(player)
+  if not player.valid or player.controller_type ~= defines.controllers.remote then
+    return
+  end
+  local surface = player.surface
+  if not surface or not surface.valid then
+    return
+  end
+  local pos = player.position
+  favorites_lib.remember_position(player_data(player.index), surface.index, pos.x, pos.y)
+end
+
 --- @param player LuaPlayer
 --- @param surface LuaSurface
 --- @return MapPosition
@@ -187,6 +161,10 @@ local function remote_position_on(player, surface)
   local physical = player.physical_surface
   if physical and physical.valid and physical.index == surface.index then
     return player.physical_position
+  end
+  local last = favorites_lib.recall_position(player_data(player.index), surface.index)
+  if last then
+    return last
   end
   local ok, pos = pcall(function()
     return player.force.get_spawn_position(surface)
@@ -212,6 +190,7 @@ local function set_remote_controller(player, surface)
   then
     return true
   end
+  record_remote_position(player)
   storage.applying[player.index] = true
   local ok = pcall(function()
     player.set_controller({
@@ -336,11 +315,12 @@ end
 
 --- @param player LuaPlayer
 local function rebuild_toggle(player)
-  destroy_toggle(player)
   if not player.valid or not player.connected then
+    destroy_toggle(player)
     return
   end
   if not setting_show_pin_ui(player) then
+    destroy_toggle(player)
     return
   end
 
@@ -349,6 +329,14 @@ local function rebuild_toggle(player)
     data.window_open = true
   end
   local open = data.window_open ~= false
+
+  -- Update in place so the button keeps its slot among other mods' buttons.
+  local existing = mod_gui.get_button_flow(player)[GUI_TOGGLE]
+  if existing and existing.valid then
+    existing.toggled = open
+    existing.tooltip = open and { "rvf.hide-window" } or { "rvf.show-window" }
+    return
+  end
 
   -- Vanilla mod-gui button row (top-left cluster with other mods).
   mod_gui.get_button_flow(player).add({
@@ -561,6 +549,26 @@ local function rebuild_all_guis()
   end
 end
 
+--- Sync toggle and list without recreating an existing list (keeps scroll position).
+--- @param player LuaPlayer
+local function update_gui(player)
+  rebuild_toggle(player)
+  local root = player.valid and player.gui.left[GUI_ROOT]
+  if root and root.valid and player.controller_type == defines.controllers.remote then
+    refresh_window(player)
+  else
+    rebuild_window(player)
+  end
+end
+
+local function refresh_all_windows()
+  for _, player in pairs(game.connected_players) do
+    if player.controller_type == defines.controllers.remote then
+      refresh_window(player)
+    end
+  end
+end
+
 --- @param player LuaPlayer
 local function apply_default_if_needed(player)
   if not player.valid or not player.connected then
@@ -590,16 +598,7 @@ local function clear_surface_assignments(surface_index)
     return
   end
   for _, data in pairs(storage.players) do
-    if data.default_surface_index == surface_index then
-      data.default_surface_index = nil
-    end
-    if data.favorites then
-      for slot = 1, FAVORITE_COUNT do
-        if data.favorites[slot] == surface_index then
-          data.favorites[slot] = nil
-        end
-      end
-    end
+    favorites_lib.clear_surface(data, surface_index)
   end
 end
 
@@ -611,6 +610,11 @@ local function jump_to_favorite(player_index, slot)
   if not player or not player.valid or not player.connected then
     return
   end
+  -- Only from the character or an existing Remote View; never hijack cutscenes, editor, etc.
+  local controller = player.controller_type
+  if controller ~= defines.controllers.character and controller ~= defines.controllers.remote then
+    return
+  end
   local surface = get_valid_favorite(player, slot)
   if not surface then
     return
@@ -618,7 +622,7 @@ local function jump_to_favorite(player_index, slot)
   -- Do not apply the TAB pin after this jump (same tick).
   storage.skip_default[player_index] = game.tick
   set_remote_controller(player, surface)
-  rebuild_gui(player)
+  update_gui(player)
 end
 
 local function process_stale_pending()
@@ -633,7 +637,7 @@ local function process_stale_pending()
       local player = game.get_player(player_index)
       if player then
         apply_default_if_needed(player)
-        rebuild_gui(player)
+        update_gui(player)
       end
     end
   end
@@ -656,6 +660,7 @@ script.on_nth_tick(30, function()
   for _, player in pairs(game.connected_players) do
     if player.controller_type == defines.controllers.remote then
       sync_window_visibility(player)
+      record_remote_position(player)
     end
   end
 end)
@@ -683,7 +688,7 @@ script.on_event(defines.events.on_player_controller_changed, function(event)
     return
   end
   if storage.skip_default[event.player_index] == event.tick then
-    rebuild_gui(player)
+    update_gui(player)
     return
   end
 
@@ -698,7 +703,7 @@ script.on_event(defines.events.on_player_controller_changed, function(event)
     storage.pending_toggle[event.player_index] = nil
   end
 
-  rebuild_gui(player)
+  update_gui(player)
 end)
 
 script.on_event(defines.events.on_gui_click, function(event)
@@ -793,14 +798,28 @@ script.on_event(defines.events.on_runtime_mod_setting_changed, function(event)
   end
 end)
 
-script.on_event(defines.events.on_surface_created, rebuild_all_guis)
-script.on_event(defines.events.on_surface_renamed, rebuild_all_guis)
-script.on_event(defines.events.on_space_platform_changed_state, rebuild_all_guis)
+script.on_event(defines.events.on_surface_created, refresh_all_windows)
+script.on_event(defines.events.on_surface_renamed, refresh_all_windows)
+script.on_event(defines.events.on_space_platform_changed_state, refresh_all_windows)
 
 script.on_event(defines.events.on_pre_surface_deleted, function(event)
   clear_surface_assignments(event.surface_index)
 end)
 
-script.on_event(defines.events.on_surface_deleted, function()
-  rebuild_all_guis()
-end)
+script.on_event(defines.events.on_surface_deleted, refresh_all_windows)
+
+-- In-game tests (only when the factorio-test mod is enabled; see scripts/run_factorio_tests.sh).
+if script.active_mods["factorio-test"] then
+  -- tests/factorio/watch_config.lua is written (and removed again) by scripts/watch_factorio_tests.sh.
+  local ok, watch_config = pcall(require, "tests/factorio/watch_config")
+  -- Custom inputs cannot be raised from script; tests drive the same handler through this.
+  remote.add_interface("rvf-test", {
+    jump = function(player_index, slot)
+      jump_to_favorite(player_index, slot)
+    end,
+  })
+  require("__factorio-test__/init")(
+    { "tests/factorio/smoke", "tests/factorio/visual" },
+    ok and type(watch_config) == "table" and watch_config or {}
+  )
+end

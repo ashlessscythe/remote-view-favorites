@@ -21,7 +21,7 @@ mkdir -p "${OUT_DIR}/${FOLDER}"
 should_exclude() {
   local rel="$1"
   case "${rel}" in
-    .git|.git/*|.github|.github/*|tests|tests/*|docs|docs/*|dist|dist/*|media|media/*) return 0 ;;
+    .git|.git/*|.github|.github/*|tests|tests/*|docker|docker/*|factorio-test.json|factorio-test-data-dir|factorio-test-data-dir/*|factorio-test-results.json|docs|docs/*|dist|dist/*|media|media/*) return 0 ;;
     .gitattributes|.gitignore|CONTRIBUTING.md|CHANGELOG.md) return 0 ;;
     *.sh|*.ps1|*.py|scripts/package_mod.sh|scripts/generate_changelog.py) return 0 ;;
     *.zip|*.exe|*.dll|*.so|*.dylib|*.bat|*.cmd|*.com) return 0 ;;

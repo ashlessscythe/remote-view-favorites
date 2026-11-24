@@ -2,6 +2,21 @@
 
 All notable changes to Remote View Favorites are documented here.
 
+## [0.2.5] — 2026-11-23
+
+### Fixed
+
+- Favorite keys are ignored during cutscenes, in the editor and while spectating; they only work from the character or Remote View.
+- The pin list and top-bar button are updated in place instead of rebuilt, so scroll position and open drop-downs survive surface and platform changes.
+
+### Changed
+
+- Returning to a surface restores where you were last looking in Remote View instead of jumping to its spawn point.
+
+### Internal
+
+- Favorite-slot logic moved to `scripts/favorites.lua`; added pure-Lua and factorio-test suites (`docs/testing.md`) and a test workflow.
+
 ## [0.2.4] — 2026-11-23
 
 ### Changed
