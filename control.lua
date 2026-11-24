@@ -822,12 +822,31 @@ script.on_event(defines.events.on_player_joined_game, function(event)
   end
 end)
 
-script.on_event(defines.events.on_player_left_game, function(event)
+--- Drop transient per-player state (keeps storage.players).
+local function clear_transient_state(player_index)
+  if storage.pending_toggle then storage.pending_toggle[player_index] = nil end
+  if storage.applying then storage.applying[player_index] = nil end
+  if storage.skip_default then storage.skip_default[player_index] = nil end
+end
+
+local function on_player_left(event)
   local player = game.get_player(event.player_index)
   if player then
     destroy_gui(player)
   end
-end)
+  clear_transient_state(event.player_index)
+end
+script.on_event(defines.events.on_player_left_game, on_player_left)
+
+local function on_player_removed(event)
+  local player = game.get_player(event.player_index)
+  if player and player.valid then
+    destroy_gui(player)
+  end
+  clear_transient_state(event.player_index)
+  if storage.players then storage.players[event.player_index] = nil end
+end
+script.on_event(defines.events.on_player_removed, on_player_removed)
 
 script.on_event(defines.events.on_runtime_mod_setting_changed, function(event)
   if event.setting ~= "rvf-enable-default" and event.setting ~= "rvf-show-pin-ui"
@@ -860,6 +879,12 @@ if script.active_mods["factorio-test"] then
   local ok, watch_config = pcall(require, "tests/factorio/watch_config")
   -- Custom inputs cannot be raised from script; tests drive the same handler through this.
   remote.add_interface("rvf-test", {
+    player_left = function(player_index)
+      on_player_left({ player_index = player_index })
+    end,
+    player_removed = function(player_index)
+      on_player_removed({ player_index = player_index })
+    end,
     jump = function(player_index, slot)
       jump_to_favorite(player_index, slot)
     end,

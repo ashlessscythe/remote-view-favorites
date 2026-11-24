@@ -133,3 +133,39 @@ describe("hotkey feedback", function()
     data.favorites[5] = saved
   end)
 end)
+
+describe("player cleanup", function()
+  local fake = 9998
+
+  local function seed()
+    storage.players[fake] = { window_open = true, favorites = {}, last_positions = {} }
+    storage.pending_toggle[fake] = 1
+    storage.applying[fake] = true
+    storage.skip_default[fake] = 1
+  end
+
+  after_each(function()
+    storage.players[fake] = nil
+    storage.pending_toggle[fake] = nil
+    storage.applying[fake] = nil
+    storage.skip_default[fake] = nil
+  end)
+
+  test("on_player_removed deletes all entries, even for a nonexistent player", function()
+    seed()
+    remote.call("rvf-test", "player_removed", fake)
+    assert(storage.players[fake] == nil, "players entry lingers")
+    assert(storage.pending_toggle[fake] == nil, "pending_toggle lingers")
+    assert(storage.applying[fake] == nil, "applying lingers")
+    assert(storage.skip_default[fake] == nil, "skip_default lingers")
+  end)
+
+  test("on_player_left_game clears transient state but keeps saved data", function()
+    seed()
+    remote.call("rvf-test", "player_left", fake)
+    assert(storage.players[fake], "saved data was removed")
+    assert(storage.pending_toggle[fake] == nil, "pending_toggle lingers")
+    assert(storage.applying[fake] == nil, "applying lingers")
+    assert(storage.skip_default[fake] == nil, "skip_default lingers")
+  end)
+end)
