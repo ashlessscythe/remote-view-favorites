@@ -2,6 +2,13 @@
 
 All notable changes to Remote View Favorites are documented here.
 
+## [0.2.4] — 2026-11-23
+
+### Changed
+
+- Reworded the Mod Portal tagline and intro paragraph.
+- Release workflow now publishes the zip and description to the Mod Portal on tag push.
+
 ## [0.2.3] — 2026-09-10
 
 ### Added

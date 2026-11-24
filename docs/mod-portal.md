@@ -10,11 +10,11 @@ The Mod Portal accepts a limited markdown subset (headings, lists, bold, italic,
 
 # Remote View Favorites
 
-> **Pin where TAB opens Remote View. Jump with Alt+1–3.**
+> **Pick your Remote View surface once. TAB and Alt+1–3 take you straight there.**
 
 ![Companion pin list next to the vanilla surface selector](https://raw.githubusercontent.com/ashlessscythe/remote-view-favorites/public/media/pin-list-screenshot.jpg)
 
-Factorio Remote View normally opens on the surface your character is standing on. This mod lets **each player** pin one default surface. Toggle map (default **TAB**) then opens Remote View there instead.
+Remote View normally opens on whichever surface your character is standing on. With this mod, **each player** can pin one default surface, so Toggle map (default **TAB**) opens Remote View there instead.
 
 Assign numbered favorites in the pin list to jump to a surface: enter Remote View if you are walking around, or switch surfaces if you are already looking around.
 
