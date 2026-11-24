@@ -2,6 +2,23 @@
 
 All notable changes to Remote View Favorites are documented here.
 
+## [0.2.6] — 2026-11-23
+
+### Added
+
+- Setting "Only list planets and space platforms" (default on) keeps mod-created internal surfaces out of the list.
+- Brief on-screen message when a favorite key has no surface assigned or Remote View cannot be opened; can be turned off in settings.
+
+### Changed
+
+- Surface list order matches vanilla: planets first, then space platforms.
+- Slot tooltips show your actual hotkey instead of a hardcoded Alt+N.
+
+### Fixed
+
+- A pinned space platform that becomes hidden no longer captures TAB (the pin is kept and works again if the platform returns).
+- Per-player data is cleaned up when a player leaves or is removed.
+
 ## [0.2.5] — 2026-11-23
 
 ### Fixed
