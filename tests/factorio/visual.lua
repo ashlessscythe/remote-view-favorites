@@ -22,6 +22,11 @@ local function assign(player, slot, surface)
   data.favorites[slot] = surface.index
 end
 
+-- Test surfaces are plain, so list them by turning the planets/platforms filter off.
+local function set_only_planets(player, value)
+  player.mod_settings["rvf-only-planets-platforms"] = { value = value }
+end
+
 local function leave_remote(player, character)
   if character and character.valid then
     pcall(player.set_controller, { type = defines.controllers.character, character = character })
@@ -36,6 +41,7 @@ describe("favorite jumps", function()
   before_each(function()
     player = the_player()
     if not player then return end
+    set_only_planets(player, false)
     character = player.character
     a = make_surface("rvf-test-a")
     b = make_surface("rvf-test-b")
@@ -55,6 +61,7 @@ describe("favorite jumps", function()
 
   after_each(function()
     if not player then return end
+    set_only_planets(player, true)
     leave_remote(player, character)
     local data = storage.players[player.index]
     data.favorites, data.default_surface_index, data.last_positions =
@@ -131,11 +138,13 @@ describe("pin list", function()
   before_each(function()
     player = the_player()
     if not player then return end
+    set_only_planets(player, false)
     a = make_surface("rvf-test-a")
   end)
 
   after_each(function()
     if not player then return end
+    set_only_planets(player, true)
     leave_remote(player, player.character)
     game.delete_surface(a)
   end)

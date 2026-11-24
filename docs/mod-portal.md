@@ -73,7 +73,7 @@ Jump keys are rebound in **Settings → Controls**, not Mod settings.
 - No extra dependencies
 - Works with **Dynamic HUD** and similar mods: the companion pin list follows the vanilla surface selector’s visibility (`show_surface_list`). The CRT toggle uses the shared mod-gui top cluster.
 
-If the pinned or slotted surface is deleted or no longer exists, that assignment is cleared and the key does nothing. The mod does not error in that case.
+If the pinned or slotted surface is deleted or no longer exists, that assignment is cleared and the key only shows a brief "not assigned" message (turn off **Show hotkey feedback messages** to silence it). The mod does not error in that case.
 
 ---
 
@@ -89,4 +89,4 @@ The TAB pin applies only to **Toggle map**. Numbered favorites also enter Remote
 Yes. Defaults and favorite slots are stored per player, not per force.
 
 **Why don't Alt+4 through Alt+0 do anything?**
-They are unbound on purpose. Assign a slot in the pin list, then bind **Favorite 4** (through **Favorite 10 (0)**) in Settings → Controls.
+They are unbound on purpose, so those keys do nothing until you bind them. Assign a slot in the pin list, then bind **Favorite 4** (through **Favorite 10 (0)**) in Settings → Controls.

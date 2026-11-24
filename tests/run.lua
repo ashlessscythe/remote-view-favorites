@@ -132,4 +132,18 @@ h.run("surface_less: same-order planets fall back to name; ties are strict", fun
   h.assert_eq(fav.surface_less(p1, p2) ~= fav.surface_less(p2, p1), true)
 end)
 
+h.run("is_listable: filter on keeps planets and platforms only", function()
+  h.assert_eq(fav.is_listable(true, false, false, true), true)
+  h.assert_eq(fav.is_listable(false, true, false, true), true)
+  h.assert_eq(fav.is_listable(false, false, false, true), false)
+end)
+
+h.run("is_listable: filter off lists everything except hidden platforms", function()
+  h.assert_eq(fav.is_listable(false, false, false, false), true)
+  h.assert_eq(fav.is_listable(true, false, false, false), true)
+  h.assert_eq(fav.is_listable(false, true, false, false), true)
+  h.assert_eq(fav.is_listable(false, true, true, false), false)
+  h.assert_eq(fav.is_listable(false, true, true, true), false)
+end)
+
 os.exit(h.summary() and 0 or 1)

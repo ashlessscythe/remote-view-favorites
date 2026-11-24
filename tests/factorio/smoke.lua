@@ -85,3 +85,51 @@ describe("hidden pinned platform", function()
     platform.destroy(1)
   end)
 end)
+
+describe("surface list filtering", function()
+  local function contains(list, idx)
+    for _, i in ipairs(list) do
+      if i == idx then return true end
+    end
+    return false
+  end
+
+  test("plain extra surface is listed only when the filter is off", function()
+    local surface = make_surface("rvf-test-plain")
+    assert(not contains(remote.call("rvf-test", "listed", true), surface.index), "listed with filter on")
+    assert(contains(remote.call("rvf-test", "listed", false), surface.index), "missing with filter off")
+    local nauvis = game.get_surface("nauvis")
+    assert(contains(remote.call("rvf-test", "listed", true), nauvis.index), "nauvis not listed with filter on")
+    game.delete_surface(surface)
+  end)
+
+  test("filtered pin and favorite are ignored, not cleared", function()
+    local surface = make_surface("rvf-test-plain2")
+    local fake_player = 9997
+    storage.players[fake_player] = {
+      default_surface_index = surface.index, window_open = true,
+      favorites = { [2] = surface.index }, last_positions = {},
+    }
+    assert(remote.call("rvf-test", "default_surface", fake_player) == nil, "filtered pin was used")
+    assert(remote.call("rvf-test", "favorite_surface", fake_player, 2) == nil, "filtered favorite was used")
+    assert(storage.players[fake_player].default_surface_index == surface.index, "pin cleared")
+    assert(storage.players[fake_player].favorites[2] == surface.index, "favorite cleared")
+    storage.players[fake_player] = nil
+    game.delete_surface(surface)
+  end)
+end)
+
+describe("hotkey feedback", function()
+  test("pressing an empty slot does not error", function()
+    local p = game.connected_players[1]
+    if not p then
+      log("[rvf-test] no connected player; skipping")
+      return
+    end
+    local data = storage.players[p.index]
+    local saved = data.favorites[5]
+    data.favorites[5] = nil
+    remote.call("rvf-test", "jump", p.index, 5)
+    data.favorites[5] = saved
+  end)
+end)

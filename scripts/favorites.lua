@@ -93,6 +93,22 @@ function favorites.recall_position(data, surface_index)
   return nil
 end
 
+--- Whether a surface belongs in the list.
+--- @param is_planet boolean
+--- @param is_platform boolean
+--- @param hidden boolean hidden space platform
+--- @param only_planets_platforms boolean
+--- @return boolean
+function favorites.is_listable(is_planet, is_platform, hidden, only_planets_platforms)
+  if is_platform and hidden then
+    return false
+  end
+  if only_planets_platforms then
+    return is_planet or is_platform
+  end
+  return true
+end
+
 local KIND_RANK = { planet = 1, platform = 2, other = 3 }
 
 --- Vanilla surface-list order: planets (by prototype order, then name), then platforms

@@ -65,17 +65,46 @@ local function setting_show_pin_ui(player)
   return s and s.value == true
 end
 
---- @param surface LuaSurface?
+--- Defaults to true when the setting is unavailable (e.g. headless tests).
+--- @param player LuaPlayer|table
 --- @return boolean
-local function surface_listable(surface)
+local function setting_only_planets_platforms(player)
+  local settings = player.mod_settings
+  local s = settings and settings["rvf-only-planets-platforms"]
+  return not s or s.value ~= false
+end
+
+--- @param player LuaPlayer|table
+--- @return boolean
+local function setting_show_feedback(player)
+  local settings = player.mod_settings
+  local s = settings and settings["rvf-show-feedback"]
+  return not s or s.value ~= false
+end
+
+--- @param player LuaPlayer
+--- @param message LocalisedString
+local function feedback(player, message)
+  if not player.valid or not setting_show_feedback(player) then
+    return
+  end
+  pcall(function()
+    player.create_local_flying_text({ text = message, create_at_cursor = true })
+  end)
+end
+
+--- @param surface LuaSurface?
+--- @param only boolean only planets and platforms
+--- @return boolean
+local function surface_listable(surface, only)
   if not surface or not surface.valid then
     return false
   end
   local platform = surface.platform
-  if platform and platform.valid and platform.hidden then
-    return false
-  end
-  return true
+  local is_platform = platform ~= nil and platform.valid
+  local planet = surface.planet
+  local is_planet = (planet ~= nil and planet.valid) or surface.name == "nauvis"
+  return favorites_lib.is_listable(is_planet, is_platform, is_platform and platform.hidden == true, only)
 end
 
 --- @param index uint?
@@ -96,7 +125,7 @@ end
 local function get_valid_default(player)
   local data = player_data(player.index)
   local surface = resolve_surface(data.default_surface_index)
-  if surface and surface_listable(surface) then
+  if surface and surface_listable(surface, setting_only_planets_platforms(player)) then
     return surface
   end
   if not surface and data.default_surface_index then
@@ -128,10 +157,12 @@ local function get_valid_favorite(player, slot)
   local data = player_data(player.index)
   local index = data.favorites[slot]
   local surface = resolve_surface(index)
-  if surface and surface_listable(surface) then
+  if surface and surface_listable(surface, setting_only_planets_platforms(player)) then
     return surface
   end
-  if index then
+  -- Only a deleted surface clears the slot; an unlisted one (hidden platform, filter setting)
+  -- is ignored so it works again when it becomes listable.
+  if index and not surface then
     data.favorites[slot] = nil
   end
   return nil
@@ -197,6 +228,9 @@ local function set_remote_controller(player, surface)
     })
   end)
   storage.applying[player.index] = nil
+  if not ok then
+    feedback(player, { "rvf.feedback-open-failed" })
+  end
   return ok
 end
 
@@ -301,11 +335,12 @@ local function surface_sort_data(surface)
   return { kind = "other", name = surface.name }
 end
 
+--- @param only boolean only planets and platforms
 --- @return LuaSurface[]
-local function listable_surfaces()
+local function listable_surfaces(only)
   local list = {}
   for _, surface in pairs(game.surfaces) do
-    if surface_listable(surface) then
+    if surface_listable(surface, only) then
       list[#list + 1] = surface
     end
   end
@@ -407,7 +442,7 @@ local function rebuild_window(player)
   hug_content(pane)
   pane.style.maximal_height = 220
 
-  for _, surface in ipairs(listable_surfaces()) do
+  for _, surface in ipairs(listable_surfaces(setting_only_planets_platforms(player))) do
     local pinned = default_index == surface.index
     local row = pane.add({
       type = "frame",
@@ -491,7 +526,7 @@ local function refresh_window(player)
     default_index = nil
   end
 
-  local surfaces = listable_surfaces()
+  local surfaces = listable_surfaces(setting_only_planets_platforms(player))
   if #pane.children ~= #surfaces then
     rebuild_window(player)
     return
@@ -626,6 +661,7 @@ local function jump_to_favorite(player_index, slot)
   end
   local surface = get_valid_favorite(player, slot)
   if not surface then
+    feedback(player, { "rvf.feedback-slot-empty", slot == 10 and 0 or slot })
     return
   end
   -- Do not apply the TAB pin after this jump (same tick).
@@ -745,7 +781,7 @@ script.on_event(defines.events.on_gui_click, function(event)
     data.default_surface_index = nil
   else
     local surface = resolve_surface(index)
-    if surface_listable(surface) then
+    if surface_listable(surface, setting_only_planets_platforms(player)) then
       data.default_surface_index = index
     end
   end
@@ -769,7 +805,7 @@ script.on_event(defines.events.on_gui_selection_state_changed, function(event)
     return
   end
   local surface = resolve_surface(tags.surface_index)
-  if not surface_listable(surface) then
+  if not surface_listable(surface, setting_only_planets_platforms(player)) then
     return
   end
   local data = player_data(player.index)
@@ -794,7 +830,8 @@ script.on_event(defines.events.on_player_left_game, function(event)
 end)
 
 script.on_event(defines.events.on_runtime_mod_setting_changed, function(event)
-  if event.setting ~= "rvf-enable-default" and event.setting ~= "rvf-show-pin-ui" then
+  if event.setting ~= "rvf-enable-default" and event.setting ~= "rvf-show-pin-ui"
+    and event.setting ~= "rvf-only-planets-platforms" then
     return
   end
   if event.player_index then
@@ -825,6 +862,17 @@ if script.active_mods["factorio-test"] then
   remote.add_interface("rvf-test", {
     jump = function(player_index, slot)
       jump_to_favorite(player_index, slot)
+    end,
+    listed = function(only)
+      local indices = {}
+      for i, surface in ipairs(listable_surfaces(only)) do
+        indices[i] = surface.index
+      end
+      return indices
+    end,
+    favorite_surface = function(player_index, slot)
+      local surface = get_valid_favorite({ index = player_index }, slot)
+      return surface and surface.index or nil
     end,
     default_surface = function(player_index)
       local surface = get_valid_default({ index = player_index })
